@@ -1,0 +1,13 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <title>个人任务管理</title>
+    <script src="/app.js"></script>
+    <script>
+        // 有 token 就直接去任务页，没有就去登录页
+        location.href = getToken() ? '/tasks.html' : '/login.html';
+    </script>
+</head>
+<body></body>
+</html>

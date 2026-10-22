@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>注册 - 个人任务管理</title>
+    <link rel="stylesheet" href="/style.css">
+</head>
+<body>
+<div class="container">
+    <div class="card">
+        <h1>注册</h1>
+
+        <div class="error" id="error"></div>
+
+        <label for="username">用户名</label>
+        <input type="text" id="username" placeholder="3~20 个字符">
+
+        <label for="password">密码</label>
+        <input type="password" id="password" placeholder="6~32 个字符">
+
+        <label for="nickname">昵称（可选）</label>
+        <input type="text" id="nickname" placeholder="怎么称呼你">
+
+        <button id="btnRegister">注册</button>
+
+        <p class="hint">已有账号？<a href="/login.html">去登录</a></p>
+    </div>
+</div>
+
+<script src="/app.js"></script>
+<script>
+    const errorBox = document.getElementById('error');
+    const btn = document.getElementById('btnRegister');
+
+    async function register() {
+        errorBox.textContent = '';
+        const username = document.getElementById('username').value.trim();
+        const password = document.getElementById('password').value;
+        const nickname = document.getElementById('nickname').value.trim();
+
+        btn.disabled = true;
+        try {
+            await request('/auth/register', {
+                method: 'POST',
+                body: JSON.stringify({ username, password, nickname })
+            });
+            alert('注册成功，请登录');
+            location.href = '/login.html';
+        } catch (e) {
+            errorBox.textContent = e.message;
+        } finally {
+            btn.disabled = false;
+        }
+    }
+
+    btn.addEventListener('click', register);
+</script>
+</body>
+</html>

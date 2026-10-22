@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>登录 - 个人任务管理</title>
+    <link rel="stylesheet" href="/style.css">
+</head>
+<body>
+<div class="container">
+    <div class="card">
+        <h1>登录</h1>
+
+        <div class="error" id="error"></div>
+
+        <label for="username">用户名</label>
+        <input type="text" id="username" placeholder="请输入用户名">
+
+        <label for="password">密码</label>
+        <input type="password" id="password" placeholder="请输入密码">
+
+        <button id="btnLogin">登录</button>
+
+        <p class="hint">还没有账号？<a href="/register.html">去注册</a></p>
+    </div>
+</div>
+
+<script src="/app.js"></script>
+<script>
+    const errorBox = document.getElementById('error');
+    const btn = document.getElementById('btnLogin');
+
+    async function login() {
+        errorBox.textContent = '';
+        const username = document.getElementById('username').value.trim();
+        const password = document.getElementById('password').value;
+
+        if (!username || !password) {
+            errorBox.textContent = '用户名和密码都要填';
+            return;
+        }
+
+        btn.disabled = true;   // 防止连点
+        try {
+            // 调用 POST /api/auth/login，返回值是 { token, nickname }
+            const data = await request('/auth/login', {
+                method: 'POST',
+                body: JSON.stringify({ username, password })
+            });
+
+            saveToken(data.token);            // 存 token
+            location.href = '/tasks.html';    // 跳任务页
+        } catch (e) {
+            errorBox.textContent = e.message; // 显示后端返回的 message
+        } finally {
+            btn.disabled = false;
+        }
+    }
+
+    btn.addEventListener('click', login);
+    // 在输入框里按回车也能登录
+    document.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter') login();
+    });
+</script>
+</body>
+</html>

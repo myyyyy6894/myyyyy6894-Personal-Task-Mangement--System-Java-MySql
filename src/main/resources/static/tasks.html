@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>我的任务</title>
+    <link rel="stylesheet" href="/style.css">
+</head>
+<body>
+<div class="container">
+    <div class="card">
+        <div class="topbar">
+            <h1>我的任务</h1>
+            <button class="ghost small" id="btnLogout">退出登录</button>
+        </div>
+
+        <!-- 新增任务 -->
+        <div style="display:flex; gap:8px; margin-bottom:20px;">
+            <input type="text" id="newTitle" placeholder="要做什么？" style="margin-bottom:0;">
+            <button id="btnAdd">添加</button>
+        </div>
+
+        <!-- 筛选 -->
+        <div class="toolbar">
+            <button class="ghost small active" data-status="">全部</button>
+            <button class="ghost small" data-status="0">未完成</button>
+            <button class="ghost small" data-status="1">已完成</button>
+        </div>
+
+        <div class="error" id="error"></div>
+        <div id="list"></div>
+    </div>
+</div>
+
+<script src="/app.js"></script>
+<script>
+    requireLogin();   // 没 token 直接跳登录页
+
+    const listBox = document.getElementById('list');
+    const errorBox = document.getElementById('error');
+    let currentStatus = '';   // '' = 全部，'0' = 未完成，'1' = 已完成
+
+    // ---------- 加载列表 ----------
+    async function loadTasks() {
+        errorBox.textContent = '';
+        try {
+            // 查询参数：/tasks?status=0
+            const path = currentStatus === '' ? '/tasks' : '/tasks?status=' + currentStatus;
+            const tasks = await request(path);
+            render(tasks);
+        } catch (e) {
+            errorBox.textContent = e.message;
+        }
+    }
+
+    // ---------- 渲染列表 ----------
+    function render(tasks) {
+        listBox.innerHTML = '';
+
+        if (!tasks || tasks.length === 0) {
+            listBox.innerHTML = '<div class="empty">还没有任务</div>';
+            return;
+        }
+
+        tasks.forEach(task => {
+            const div = document.createElement('div');
+            div.className = 'task' + (task.status === 1 ? ' done' : '');
+
+            // 勾选框：改状态
+            const checkbox = document.createElement('input');
+            checkbox.type = 'checkbox';
+            checkbox.checked = task.status === 1;
+            checkbox.addEventListener('change', () => toggleStatus(task));
+
+            // 标题
+            const text = document.createElement('div');
+            text.className = 'title';
+            text.innerHTML = '';
+            const span = document.createElement('div');
+            span.textContent = task.title;
+            text.appendChild(span);
+            if (task.content) {
+                const c = document.createElement('div');
+                c.className = 'content';
+                c.textContent = task.content;
+                text.appendChild(c);
+            }
+
+            // 删除按钮
+            const del = document.createElement('button');
+            del.className = 'danger small';
+            del.textContent = '删除';
+            del.addEventListener('click', () => removeTask(task.id));
+
+            div.append(checkbox, text, del);
+            listBox.appendChild(div);
+        });
+    }
+
+    // ---------- 新增 ----------
+    async function addTask() {
+        errorBox.textContent = '';
+        const input = document.getElementById('newTitle');
+        const title = input.value.trim();
+        if (!title) {
+            errorBox.textContent = '任务标题不能为空';
+            return;
+        }
+
+        try {
+            await request('/tasks', {
+                method: 'POST',
+                body: JSON.stringify({ title, content: '' })
+            });
+            input.value = '';
+            loadTasks();
+        } catch (e) {
+            errorBox.textContent = e.message;
+        }
+    }
+
+    // ---------- 切换完成状态 ----------
+    async function toggleStatus(task) {
+        const next = task.status === 1 ? 0 : 1;
+        try {
+            await request('/tasks/' + task.id + '/status', {
+                method: 'PATCH',
+                body: JSON.stringify({ status: next })
+            });
+            loadTasks();
+        } catch (e) {
+            errorBox.textContent = e.message;
+            loadTasks();   // 失败时重新加载，把勾选框恢复原样
+        }
+    }
+
+    // ---------- 删除 ----------
+    async function removeTask(id) {
+        if (!confirm('确定删除这条任务吗？')) return;
+        try {
+            await request('/tasks/' + id, { method: 'DELETE' });
+            loadTasks();
+        } catch (e) {
+            errorBox.textContent = e.message;
+        }
+    }
+
+    // ---------- 事件绑定 ----------
+    document.getElementById('btnAdd').addEventListener('click', addTask);
+    document.getElementById('newTitle').addEventListener('keydown', (e) => {
+        if (e.key === 'Enter') addTask();
+    });
+
+    document.querySelectorAll('.toolbar button').forEach(btn => {
+        btn.addEventListener('click', () => {
+            document.querySelectorAll('.toolbar button').forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+            currentStatus = btn.dataset.status;
+            loadTasks();
+        });
+    });
+
+    document.getElementById('btnLogout').addEventListener('click', () => {
+        clearToken();
+        location.href = '/login.html';
+    });
+
+    loadTasks();
+</script>
+</body>
+</html>

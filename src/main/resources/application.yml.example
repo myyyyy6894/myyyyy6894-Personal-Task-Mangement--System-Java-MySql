@@ -1,0 +1,20 @@
+spring:
+  application:
+    name: ptms
+
+  datasource:
+    url: "jdbc:mysql://localhost:3306/ptms?useUnicode=true&characterEncoding=utf8&serverTimezone=Asia/Shanghai&useSSL=false&allowPublicKeyRetrieval=true"
+    username: ptms
+    password: "改成你的数据库密码"
+    driver-class-name: com.mysql.cj.jdbc.Driver
+
+mybatis:
+  configuration:
+    map-underscore-to-camel-case: true
+
+jwt:
+  secret: "改成至少32位的随机字符串，不要用这个默认值"
+  expire-hours: 24
+
+server:
+  port: 8080
